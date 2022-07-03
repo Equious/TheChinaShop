@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "contracts/interfaces/IERC20.sol";
 
 error RandomIpfsNft__TransferFailed();
+error TheChinaShop__ListingInactive();
 
 contract TheChinaShop is Ownable {
     struct Listing {
@@ -67,13 +68,29 @@ contract TheChinaShop is Ownable {
     }
 
     function buyMeth(Listing) public payable {
+        if(Listing.ongoing = true){
         transfer(Listing.seller, Listing.ETHamount)
         Listing.ongoing = false;
         Listing.canceled = false;
         Listing.sold = true;
         salesCounter++;
         totalMethTraded += Listing.TokenAmount;
+        }else {
+            revert TheChinaShop__ListingInactive()
+        }
 
+    }
+
+    function cancelListing(Listing) public {
+        require(msg.sender == Listing.seller){
+        if(Listing.ongoing = true){
+            Listing.ongoing = false;
+            Listing.canceled = true;
+            Listing.sold = false;
+            methContract.transferFrom(address(this), msg.sender, Listing.tokenAmount)
+        }
+        }
+        revert
     }
 
     function getTotalSales() public view returns(uint256){
