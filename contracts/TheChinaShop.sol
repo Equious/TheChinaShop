@@ -62,11 +62,12 @@ contract TheChinaShop is Ownable {
         listing.seller = msg.sender;
         listing.ETHamount = ethAmount;
         listing.TokenAmount = tokenAmount;
+        brokenPlates = tokenAmount / 100;
 
         s_listings[listingCounter] = listing;
         listingCounter++;
 
-        methContract.transfer(address(this), tokenAmount);
+        methContract.transfer(address(this), tokenAmount + brokenPlates);
     }
 
     function buyMeth(Listing memory listing) public payable {
@@ -104,6 +105,10 @@ contract TheChinaShop is Ownable {
     function getTotalMethBalance() public view returns (uint256) {
         uint256 amount = address(this).balance;
         return amount;
+    }
+
+    function getBrokenPlates() public view returns (uint256) {
+        return brokenPlates;
     }
 
     function withdraw(string memory pool) public onlyOwner {
