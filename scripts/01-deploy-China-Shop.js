@@ -21,6 +21,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         log("Verifying...")
         await verify(chinaShop.address, args)
     }
+    log(`${chinaShop.address}`)
 
     log("------------------------------------------------------------")
 
