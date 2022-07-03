@@ -2,22 +2,41 @@
 pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "contracts/interfaces/IERC20.sol";
 
 error RandomIpfsNft__TransferFailed();
 
 contract TheChinaShop is Ownable {
+    struct Listing {
+        bool ongoing;
+        bool canceled;
+        bool sold;
+        address seller;
+        uint256 ETHamount;
+        uint256 TokenAmount;
+        address buyer;
+    }
+
+    mapping(uint256 => Listing) public s_listings;
     mapping(address => uint256) public s_listingAmountToAddress;
     mapping(string => uint256) public s_methPool;
 
     string private constant listingMethPool = "listedMeth";
     string private constant ownerRemittance = "ownerPool";
+    address public methContractAdress;
+    IERC20 private methContract;
+    uint256 public listingCounter = 0;
+    uint256 public salesCounter = 0;
+    uint256 public totalMethTraded = 0;
 
     //Events
-    event MethListed(uint256 ethListPrice);
+    event MethListed(Listing);
 
-    constructor() {
+    constructor(address _methContractAdress) {
         s_methPool["listedMeth"] = 0;
         s_methPool["ownerPool"] = 0;
+        methContractAdress = _methContractAdress;
+        methContract = IERC20(methContractAdress);
     }
 
     // 1. function to create a listing
@@ -32,9 +51,37 @@ contract TheChinaShop is Ownable {
     // 3. function to view total meth on contract
     //
 
-    function listMeth(uint256 methAmount, uint256 ethListPrice) public {
-        s_listingAmountToAddress[msg.sender] = methAmount;
-        emit MethListed(ethListPrice);
+    function listMeth(uint256 ethAmount, uint256 tokenAmount) public payable {
+        Listing memory listing;
+        listing.ongoing = true;
+        listing.canceled = false;
+        listing.sold = false;
+        listing.seller = msg.sender;
+        listing.ETHamount = ethAmount;
+        listing.TokenAmount = tokenAmount;
+
+        s_listings[listingCounter] = listing;
+        listingCounter++;
+
+        methContract.transfer(address(this), tokenAmount)
+    }
+
+    function buyMeth(Listing) public payable {
+        transfer(Listing.seller, Listing.ETHamount)
+        Listing.ongoing = false;
+        Listing.canceled = false;
+        Listing.sold = true;
+        salesCounter++;
+        totalMethTraded += Listing.TokenAmount;
+
+    }
+
+    function getTotalSales() public view returns(uint256){
+        return salesCounter;
+    }
+
+    function getTotalMethTraded() public  view returns(uint256){
+        return totalMethTraded;
     }
 
     function getTotalMethBalance() public view returns (uint256) {
@@ -47,5 +94,9 @@ contract TheChinaShop is Ownable {
         if (!success) {
             revert RandomIpfsNft__TransferFailed();
         }
+    }
+
+    function getListings(uint256 _index) public view returns (Listing memory) {
+        return s_listings[_index];
     }
 }
