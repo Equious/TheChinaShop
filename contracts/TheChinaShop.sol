@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "contracts/interfaces/IERC20.sol";
 
@@ -8,6 +9,8 @@ error RandomIpfsNft__TransferFailed();
 error TheChinaShop__ListingInactive();
 
 contract TheChinaShop is Ownable {
+    using Counters for Counters.Counter;
+
     struct Listing {
         bool ongoing;
         bool canceled;
@@ -27,8 +30,8 @@ contract TheChinaShop is Ownable {
     address public methContractAdress;
     IERC20 private methContract;
     uint256 public listingCounter = 0;
-    uint256 public salesCounter = 0;
     uint256 public totalMethTraded = 0;
+    Counters.Counter private salesCounter_;
 
     //Events
     event MethListed(Listing);
@@ -61,8 +64,9 @@ contract TheChinaShop is Ownable {
         listing.ETHamount = ethAmount;
         listing.TokenAmount = tokenAmount;
 
-        s_listings[listingCounter] = listing;
-        listingCounter++;
+        s_listings[listingCounter] = listing
+
+        listingCounter_.increment()
 
         methContract.transfer(address(this), tokenAmount)
     }
@@ -73,6 +77,7 @@ contract TheChinaShop is Ownable {
         Listing.ongoing = false;
         Listing.canceled = false;
         Listing.sold = true;
+        
         salesCounter++;
         totalMethTraded += Listing.TokenAmount;
         }else {
@@ -82,19 +87,20 @@ contract TheChinaShop is Ownable {
     }
 
     function cancelListing(Listing) public {
-        require(msg.sender == Listing.seller){
+        require(msg.sender == Listing.seller);
         if(Listing.ongoing = true){
             Listing.ongoing = false;
             Listing.canceled = true;
             Listing.sold = false;
             methContract.transferFrom(address(this), msg.sender, Listing.tokenAmount)
         }
+        else {
+            revert  
         }
-        revert
     }
 
     function getTotalSales() public view returns(uint256){
-        return salesCounter;
+        return salesCounter._current();
     }
 
     function getTotalMethTraded() public  view returns(uint256){
