@@ -6,6 +6,7 @@ import "contracts/interfaces/IERC20.sol";
 
 error RandomIpfsNft__TransferFailed();
 error TheChinaShop__ListingInactive();
+error TheChinaShop__CancelFailed();
 
 contract TheChinaShop is Ownable {
     struct Listing {
@@ -29,6 +30,7 @@ contract TheChinaShop is Ownable {
     uint256 public listingCounter = 0;
     uint256 public salesCounter = 0;
     uint256 public totalMethTraded = 0;
+    uint256 public brokenPlates = 0;
 
     //Events
     event MethListed(Listing);
@@ -64,40 +66,38 @@ contract TheChinaShop is Ownable {
         s_listings[listingCounter] = listing;
         listingCounter++;
 
-        methContract.transfer(address(this), tokenAmount)
+        methContract.transfer(address(this), tokenAmount);
     }
 
-    function buyMeth(Listing) public payable {
-        if(Listing.ongoing = true){
-        transfer(Listing.seller, Listing.ETHamount)
-        Listing.ongoing = false;
-        Listing.canceled = false;
-        Listing.sold = true;
-        salesCounter++;
-        totalMethTraded += Listing.TokenAmount;
-        }else {
-            revert TheChinaShop__ListingInactive()
+    function buyMeth(Listing memory listing) public payable {
+        if (listing.ongoing = true) {
+            methContract.transfer(listing.seller, listing.ETHamount);
+            listing.ongoing = false;
+            listing.canceled = false;
+            listing.sold = true;
+            salesCounter++;
+            totalMethTraded += listing.TokenAmount;
+        } else {
+            revert TheChinaShop__ListingInactive();
         }
-
     }
 
-    function cancelListing(Listing) public {
-        require(msg.sender == Listing.seller){
-        if(Listing.ongoing = true){
-            Listing.ongoing = false;
-            Listing.canceled = true;
-            Listing.sold = false;
-            methContract.transferFrom(address(this), msg.sender, Listing.tokenAmount)
+    function cancelListing(Listing memory listing) public {
+        require(msg.sender == listing.seller);
+        if (listing.ongoing = true) {
+            listing.ongoing = false;
+            listing.canceled = true;
+            listing.sold = false;
+            methContract.transferFrom(address(this), msg.sender, listing.TokenAmount);
         }
-        }
-        revert
+        revert TheChinaShop__CancelFailed();
     }
 
-    function getTotalSales() public view returns(uint256){
+    function getTotalSales() public view returns (uint256) {
         return salesCounter;
     }
 
-    function getTotalMethTraded() public  view returns(uint256){
+    function getTotalMethTraded() public view returns (uint256) {
         return totalMethTraded;
     }
 
